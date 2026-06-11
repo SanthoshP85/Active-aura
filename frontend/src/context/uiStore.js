@@ -34,6 +34,8 @@ export const useUIStore = create((set) => ({
 
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
 
+  closeSidebar: () => set({ sidebarOpen: false }),
+
   // Loading actions
   setLoading: (isLoading) => set({ isLoading }),
 }));

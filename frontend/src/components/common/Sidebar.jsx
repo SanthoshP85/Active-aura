@@ -13,6 +13,7 @@ import {
   Lightbulb,
   MessageCircle,
   Settings,
+  X,
 } from "lucide-react";
 
 const navItems = [
@@ -56,7 +57,18 @@ export const Sidebar = () => {
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
       >
-        <nav className="p-4 space-y-2">
+        {/* Close button - Mobile only */}
+        <div className="flex justify-end p-3 md:hidden">
+          <button
+            onClick={closeSidebar}
+            className="p-2 rounded-lg hover:bg-gray-800 transition-colors"
+            aria-label="Close sidebar"
+          >
+            <X size={24} className="text-white" />
+          </button>
+        </div>
+
+        <nav className="p-4 pt-0 md:pt-4 space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
