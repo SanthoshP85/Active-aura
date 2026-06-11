@@ -23,7 +23,7 @@ const getCorsOrigins = () => {
     allowedOrigins.push(process.env.NGROK_BACKEND_URL);
   }
 
-  // Allow custom frontend URL from env
+  // Allow custom frontend URL from env (for Vercel deployment)
   if (
     process.env.FRONTEND_URL &&
     !allowedOrigins.includes(process.env.FRONTEND_URL)
@@ -54,19 +54,24 @@ const corsOptions = {
       )
     ) {
       callback(null, true);
+    } else if (origin.includes("vercel.app")) {
+      // Allow all Vercel deployments
+      callback(null, true);
+    } else if (origin.includes("ngrok")) {
+      // Allow ngrok URLs
+      callback(null, true);
     } else if (process.env.NODE_ENV === "development") {
-      // In development, be more lenient with ngrok URLs
-      if (origin.includes("ngrok")) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
+      // In development, be more lenient
+      callback(null, true);
     } else {
+      console.log("CORS blocked origin:", origin);
       callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
   optionsSuccessStatus: 200,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
 };
 
 const getCorsMiddleware = () => cors(corsOptions);
