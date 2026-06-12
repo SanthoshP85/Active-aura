@@ -22,7 +22,7 @@ const navItems = [
   { icon: Dumbbell, label: "Activities", path: "/activities" },
   { icon: Target, label: "Goals", path: "/goals" },
   { icon: Lightbulb, label: "Insights", path: "/insights" },
-  { icon: MessageCircle, label: "Arnold", path: "/chatbot" },
+  { icon: MessageCircle, label: "Aura", path: "/chatbot" },
   { icon: Settings, label: "Profile", path: "/profile" },
 ];
 

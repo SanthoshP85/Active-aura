@@ -14,7 +14,7 @@ export const ChatbotPage = () => {
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: "Hello! I'm Arnold, your AI fitness coach. How can I help you today?",
+      text: "Hello! I'm Aura, your AI fitness coach. How can I help you today?",
       sender: "bot",
       timestamp: new Date(),
     },
