@@ -5,13 +5,21 @@
 
 import api from "./api";
 
+// Helper to format date in local timezone
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const caloriesService = {
   /**
    * Get daily calorie summary
    */
   getDailySummary: async (date) => {
     const response = await api.get("/calories/daily", {
-      params: { date: date.toISOString().split("T")[0] },
+      params: { date: formatLocalDate(date) },
     });
     return response.data.data;
   },
@@ -56,8 +64,8 @@ export const caloriesService = {
   getHistory: async (startDate, endDate) => {
     const response = await api.get("/calories/history", {
       params: {
-        startDate: startDate.toISOString().split("T")[0],
-        endDate: endDate.toISOString().split("T")[0],
+        startDate: formatLocalDate(startDate),
+        endDate: formatLocalDate(endDate),
       },
     });
     return response.data.data;
@@ -78,7 +86,7 @@ export const caloriesService = {
    */
   getMacroBreakdown: async (date) => {
     const response = await api.get("/calories/macros", {
-      params: { date: date.toISOString().split("T")[0] },
+      params: { date: formatLocalDate(date) },
     });
     return response.data.data;
   },

@@ -10,9 +10,18 @@ const { storeFitnessSummary } = require("../rag/ragService");
  * Service: Log activity
  */
 const logActivity = async (userId, activityData) => {
+  // Parse date string to local timezone to avoid UTC conversion issues
+  let activityDate;
+  if (typeof activityData.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(activityData.date)) {
+    const [year, month, day] = activityData.date.split('-').map(Number);
+    activityDate = new Date(year, month - 1, day, 12, 0, 0, 0); // Use noon to avoid edge cases
+  } else {
+    activityDate = new Date(activityData.date);
+  }
+
   const activity = new Activities({
     userId,
-    date: new Date(activityData.date),
+    date: activityDate,
     workoutType: activityData.workoutType,
     duration: activityData.duration,
     caloriesBurned: activityData.caloriesBurned,
@@ -54,20 +63,27 @@ const getActivitiesRange = async (userId, startDate, endDate) => {
 /**
  * Service: Get activities by date
  */
-const getActivitiesByDate = async (userId, date) => {
-  const startOfDay = new Date(date);
-  startOfDay.setHours(0, 0, 0, 0);
+const getActivitiesByDate = async (userId, dateStr) => {
+  // Parse date string and create UTC day boundaries
+  // dateStr format: "YYYY-MM-DD"
+  const [year, month, day] = dateStr.split('-').map(Number);
+  
+  // Create UTC day boundaries (00:00:00 to 23:59:59 UTC for the given date)
+  const startUTC = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+  const endUTC = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
 
-  const endOfDay = new Date(date);
-  endOfDay.setHours(23, 59, 59, 999);
+  console.log(`Querying activities for ${dateStr}:`, {
+    startUTC: startUTC.toISOString(),
+    endUTC: endUTC.toISOString()
+  });
 
   const activities = await Activities.find({
     userId,
-    date: {
-      $gte: startOfDay,
-      $lte: endOfDay,
+    createdAt: {
+      $gte: startUTC,
+      $lte: endUTC,
     },
-  }).sort({ date: -1 });
+  }).sort({ createdAt: -1 });
 
   return activities;
 };

@@ -8,13 +8,16 @@ import { Card } from "../components/common/Card";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { Input } from "../components/common/Input";
+import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { useData } from "../hooks/useData";
 import { FITNESS_GOALS } from "../utils/constants";
-import { Plus } from "lucide-react";
+import { Plus, AlertCircle } from "lucide-react";
 
 export const GoalsPage = () => {
   const { goals, createGoal, fetchGoals } = useData();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     goalType: "weight_loss",
     goalWeight: "",
@@ -27,13 +30,16 @@ export const GoalsPage = () => {
 
   // Fetch goals on mount
   useEffect(() => {
-    fetchGoals().catch((error) => {
-      console.error("Failed to fetch goals:", error);
+    fetchGoals().catch((err) => {
+      setError(err.response?.data?.message || "Failed to fetch goals");
     });
   }, [fetchGoals]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
     try {
       await createGoal(formData);
       setFormData({
@@ -46,14 +52,35 @@ export const GoalsPage = () => {
         fatsTarget: "",
       });
       setIsModalOpen(false);
-    } catch (error) {
-      console.error("Failed to create goal:", error);
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          "Failed to create goal. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
+        {/* Error Alert */}
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-red-800 font-medium">{error}</p>
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-600 hover:text-red-800"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">Fitness Goals</h1>
           <Button variant="primary" onClick={() => setIsModalOpen(true)}>
@@ -61,56 +88,62 @@ export const GoalsPage = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {(goals.all || []).length === 0 ? (
-            <Card className="col-span-full text-center py-12">
-              <p className="text-gray-500 mb-4">No goals created yet</p>
-              <Button variant="primary" onClick={() => setIsModalOpen(true)}>
-                Create Your First Goal
-              </Button>
-            </Card>
-          ) : (
-            (goals.all || []).map((goal, idx) => (
-              <Card
-                key={idx}
-                title={goal.goalType.replace("_", " ").toUpperCase()}
-              >
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-gray-600">Goal Weight</p>
-                    <p className="text-lg font-semibold">
-                      {goal.goalWeight} kg
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Target Calories</p>
-                    <p className="text-lg font-semibold">
-                      {goal.targetCalories} kcal/day
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Timeline</p>
-                    <p className="text-lg font-semibold">
-                      {goal.timeline} weeks
-                    </p>
-                  </div>
-                  <div className="pt-4 border-t border-gray-200">
-                    <p className="text-sm text-gray-600">Progress</p>
-                    <div className="mt-2 bg-gray-200 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-primary-600 h-full rounded-full"
-                        style={{ width: `${goal.progressPercentage}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-sm font-semibold mt-2">
-                      {goal.progressPercentage}%
-                    </p>
-                  </div>
-                </div>
+        {goals.isLoading ? (
+          <div className="flex justify-center py-12">
+            <LoadingSpinner />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {(goals.all || []).length === 0 ? (
+              <Card className="col-span-full text-center py-12">
+                <p className="text-gray-500 mb-4">No goals created yet</p>
+                <Button variant="primary" onClick={() => setIsModalOpen(true)}>
+                  Create Your First Goal
+                </Button>
               </Card>
-            ))
-          )}
-        </div>
+            ) : (
+              (goals.all || []).map((goal, idx) => (
+                <Card
+                  key={idx}
+                  title={goal.goalType.replace("_", " ").toUpperCase()}
+                >
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm text-gray-600">Goal Weight</p>
+                      <p className="text-lg font-semibold">
+                        {goal.goalWeight} kg
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Target Calories</p>
+                      <p className="text-lg font-semibold">
+                        {goal.targetCalories} kcal/day
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Timeline</p>
+                      <p className="text-lg font-semibold">
+                        {goal.timeline} weeks
+                      </p>
+                    </div>
+                    <div className="pt-4 border-t border-gray-200">
+                      <p className="text-sm text-gray-600">Progress</p>
+                      <div className="mt-2 bg-gray-200 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="bg-primary-600 h-full rounded-full"
+                          style={{ width: `${goal.progressPercentage}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-sm font-semibold mt-2">
+                        {goal.progressPercentage}%
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              ))
+            )}
+          </div>
+        )}
       </div>
 
       {/* Modal */}
@@ -208,8 +241,19 @@ export const GoalsPage = () => {
             />
           </div>
 
-          <Button type="submit" variant="primary" className="w-full">
-            Create Goal
+          <Button
+            type="submit"
+            variant="primary"
+            className="w-full"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <LoadingSpinner size="sm" text="" /> Creating...
+              </>
+            ) : (
+              "Create Goal"
+            )}
           </Button>
         </form>
       </Modal>

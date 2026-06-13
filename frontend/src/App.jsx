@@ -27,6 +27,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 
 // Components
 import { AuthGuard } from "./components/common/AuthGuard";
+import { ErrorBanner } from "./components/common/ErrorBanner";
 
 // Styles
 import "./styles/globals.css";
@@ -45,6 +46,9 @@ function App() {
 
   return (
     <Router>
+      {/* Global Error Banner */}
+      <ErrorBanner />
+
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />

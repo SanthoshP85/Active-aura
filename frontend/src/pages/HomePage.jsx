@@ -7,6 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../components/common/Button";
 import { useAuth } from "../hooks/useAuth";
 import { Activity, Zap, Brain, BarChart3 } from "lucide-react";
+import Logo from "../../src/assets/images/app_logo.png";
 
 export const HomePage = () => {
   const { isAuthenticated } = useAuth();
@@ -43,8 +44,11 @@ export const HomePage = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50">
       {/* Header */}
       <header className="sticky top-0 bg-white shadow-sm z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-primary-600">🎯 ActiveAura</h1>
+        <div className="max-w-6xl mx-auto py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <img src={Logo} alt="ActiveAura Logo" className="h-10 w-20  " />
+            <h1 className="text-2xl font-bold text-primary-600">ActiveAura</h1>
+          </div>
           <div className="flex gap-4">
             <Link to="/login">
               <Button variant="ghost">Log In</Button>
@@ -71,9 +75,6 @@ export const HomePage = () => {
               Get Started Free
             </Button>
           </Link>
-          <Button variant="outline" size="lg">
-            Learn More
-          </Button>
         </div>
       </section>
 
@@ -118,7 +119,7 @@ export const HomePage = () => {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-8">
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <p>&copy; 2024 ActiveAura. All rights reserved.</p>
+          <p>&copy; 2026 ActiveAura. All rights reserved.</p>
         </div>
       </footer>
     </div>

@@ -248,11 +248,11 @@ const analyzeGoalProgress = async (userId) => {
   }
 
   let severity = "info";
-  let title = "🎯 Goal Progress";
+  let title = "Goal Progress";
 
   if (progressPercentage > 75) {
     severity = "success";
-    title = "🎉 Almost There!";
+    title = "Almost There!";
   } else if (progressPercentage > 50) {
     severity = "success";
     title = "👏 Excellent Progress";

@@ -46,8 +46,9 @@ const logFoodController = async (req, res, next) => {
  */
 const getDailySummary = async (req, res, next) => {
   try {
-    const date = req.query.date ? new Date(req.query.date) : new Date();
-    const summary = await getDailyCaloriesSummary(req.userId, date);
+    // Pass date string directly to avoid timezone issues
+    const dateStr = req.query.date || new Date().toISOString().split('T')[0];
+    const summary = await getDailyCaloriesSummary(req.userId, dateStr);
 
     return successResponse(res, 200, "Daily summary fetched", summary);
   } catch (error) {

@@ -11,9 +11,17 @@ const axios = require("axios");
 /**
  * Service: Get or create daily calorie tracker
  */
-const getOrCreateDailyTracker = async (userId, date) => {
-  const startOfDay = new Date(date);
-  startOfDay.setHours(0, 0, 0, 0);
+const getOrCreateDailyTracker = async (userId, dateStr) => {
+  // Parse date string to avoid timezone issues
+  // dateStr format: "YYYY-MM-DD" or Date object
+  let startOfDay;
+  if (typeof dateStr === 'string') {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
+  } else {
+    startOfDay = new Date(dateStr);
+    startOfDay.setHours(0, 0, 0, 0);
+  }
 
   let tracker = await CaloriesTracker.findOne({
     userId,
@@ -35,11 +43,20 @@ const getOrCreateDailyTracker = async (userId, date) => {
  * Service: Log food for a meal
  */
 const logFood = async (userId, foodData) => {
-  const date = new Date(foodData.date || Date.now());
-  date.setHours(0, 0, 0, 0);
+  // Parse date string to local timezone to avoid UTC conversion issues
+  let dateStr;
+  if (typeof foodData.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(foodData.date)) {
+    dateStr = foodData.date;
+  } else if (foodData.date) {
+    const d = new Date(foodData.date);
+    dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  } else {
+    const d = new Date();
+    dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
 
   // Get or create daily tracker
-  const tracker = await getOrCreateDailyTracker(userId, date);
+  const tracker = await getOrCreateDailyTracker(userId, dateStr);
 
   // Create food log entry
   const foodLog = new FoodsLogged({
@@ -94,9 +111,16 @@ const logFood = async (userId, foodData) => {
 /**
  * Service: Get daily calorie summary
  */
-const getDailyCaloriesSummary = async (userId, date) => {
-  const startOfDay = new Date(date);
-  startOfDay.setHours(0, 0, 0, 0);
+const getDailyCaloriesSummary = async (userId, dateStr) => {
+  // Parse date string to avoid timezone issues
+  let startOfDay;
+  if (typeof dateStr === 'string') {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
+  } else {
+    startOfDay = new Date(dateStr);
+    startOfDay.setHours(0, 0, 0, 0);
+  }
 
   const tracker = await CaloriesTracker.findOne({
     userId,

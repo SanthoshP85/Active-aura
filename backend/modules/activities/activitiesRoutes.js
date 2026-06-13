@@ -22,6 +22,7 @@ router.use(authenticateToken);
 router.post("/log", validate(logActivitySchema), logActivityController);
 router.get("/range", getRange);
 router.get("/date", getByDate);
+router.get("/daily", getByDate); // Alias for frontend compatibility
 router.get("/weekly", getWeeklySummaryController);
 router.put("/:activityId", updateActivityController);
 router.delete("/:activityId", deleteActivityController);

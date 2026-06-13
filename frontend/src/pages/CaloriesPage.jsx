@@ -10,12 +10,14 @@ import { Input } from "../components/common/Input";
 import { Modal } from "../components/common/Modal";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { caloriesService } from "../services/caloriesService";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, AlertCircle, Calendar } from "lucide-react";
 
 export const CaloriesPage = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [dailyData, setDailyData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     foodName: "",
@@ -33,23 +35,47 @@ export const CaloriesPage = () => {
 
   const fetchDailyCalories = async (date) => {
     setIsLoading(true);
+    setError(null);
     try {
       const response = await caloriesService.getDailySummary(date);
       setDailyData(response);
-    } catch (error) {
-      console.error("Failed to fetch daily calories:", error);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to fetch daily calories");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Filter out empty values before submitting
+  const buildPayload = () => {
+    const payload = {
+      foodName: formData.foodName,
+      mealType: formData.mealType,
+      calories: Number(formData.calories),
+      date: selectedDate,
+    };
+
+    // Only add optional fields if they have values
+    if (formData.protein && formData.protein.toString().trim() !== "") {
+      payload.protein = Number(formData.protein);
+    }
+    if (formData.carbs && formData.carbs.toString().trim() !== "") {
+      payload.carbs = Number(formData.carbs);
+    }
+    if (formData.fats && formData.fats.toString().trim() !== "") {
+      payload.fats = Number(formData.fats);
+    }
+
+    return payload;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
     try {
-      await caloriesService.logFood({
-        ...formData,
-        date: selectedDate,
-      });
+      await caloriesService.logFood(buildPayload());
       setFormData({
         foodName: "",
         mealType: "breakfast",
@@ -61,13 +87,13 @@ export const CaloriesPage = () => {
       setIsModalOpen(false);
       // Refresh daily data
       fetchDailyCalories(selectedDate);
-    } catch (error) {
-      console.error("Failed to log food:", error);
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Failed to log food. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-  const handleDateChange = (e) => {
-    setSelectedDate(new Date(e.target.value));
   };
 
   if (isLoading) {
@@ -88,24 +114,77 @@ export const CaloriesPage = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
+        {/* Error Alert */}
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-red-800 font-medium">{error}</p>
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-600 hover:text-red-800"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div className="flex-1">
             <h1 className="text-3xl font-bold mb-4">Calorie Tracking</h1>
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  const newDate = new Date(selectedDate);
+                  newDate.setDate(newDate.getDate() - 1);
+                  setSelectedDate(newDate);
+                }}
+                className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                <span className="text-lg">‹</span>
+              </button>
+              <button
+                onClick={() => document.getElementById('calorie-date-picker').showPicker()}
+                className="px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors cursor-pointer text-base font-medium flex items-center gap-2"
+              >
+                <Calendar size={18} className="text-gray-500" />
+                <span>
+                  {selectedDate.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
+              </button>
               <input
+                id="calorie-date-picker"
                 type="date"
-                value={selectedDate.toISOString().split("T")[0]}
-                onChange={handleDateChange}
-                className="px-4 py-2 border border-gray-300 rounded-lg"
+                value={`${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`}
+                max={`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`}
+                onChange={(e) => {
+                  const [year, month, day] = e.target.value.split('-').map(Number);
+                  setSelectedDate(new Date(year, month - 1, day));
+                }}
+                className="sr-only"
               />
-              <span className="text-gray-600">
-                {selectedDate.toLocaleDateString("en-US", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </span>
+              <button
+                onClick={() => {
+                  const newDate = new Date(selectedDate);
+                  newDate.setDate(newDate.getDate() + 1);
+                  if (newDate <= new Date()) {
+                    setSelectedDate(newDate);
+                  }
+                }}
+                disabled={selectedDate.toDateString() === new Date().toDateString()}
+                className={`p-2 rounded-lg transition-colors ${
+                  selectedDate.toDateString() === new Date().toDateString()
+                    ? "text-gray-300 cursor-not-allowed"
+                    : "hover:bg-gray-200"
+                }`}
+              >
+                <span className="text-lg">›</span>
+              </button>
             </div>
           </div>
           <Button variant="primary" onClick={() => setIsModalOpen(true)}>
@@ -310,6 +389,7 @@ export const CaloriesPage = () => {
               onChange={(e) =>
                 setFormData({ ...formData, protein: e.target.value })
               }
+              placeholder="Optional"
             />
             <Input
               label="Carbs (g)"
@@ -318,6 +398,7 @@ export const CaloriesPage = () => {
               onChange={(e) =>
                 setFormData({ ...formData, carbs: e.target.value })
               }
+              placeholder="Optional"
             />
             <Input
               label="Fats (g)"
@@ -326,11 +407,23 @@ export const CaloriesPage = () => {
               onChange={(e) =>
                 setFormData({ ...formData, fats: e.target.value })
               }
+              placeholder="Optional"
             />
           </div>
 
-          <Button type="submit" variant="primary" className="w-full">
-            Log Food
+          <Button
+            type="submit"
+            variant="primary"
+            className="w-full"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <LoadingSpinner size="sm" text="" /> Logging...
+              </>
+            ) : (
+              "Log Food"
+            )}
           </Button>
         </form>
       </Modal>

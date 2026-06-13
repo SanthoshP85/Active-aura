@@ -11,6 +11,17 @@ export const useUIStore = create((set) => ({
   modal: null,
   sidebarOpen: true,
   isLoading: false,
+  error: null,
+
+  // Error actions - for showing error banner at top
+  showError: (message, duration = 5000) => {
+    set({ error: message });
+    if (duration > 0) {
+      setTimeout(() => set({ error: null }), duration);
+    }
+  },
+
+  hideError: () => set({ error: null }),
 
   // Toast actions
   showToast: (message, type = "info", duration = 3000) => {

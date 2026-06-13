@@ -19,11 +19,10 @@ const Activities = require("../../models/Activities");
  * Response limits configuration
  */
 const RESPONSE_CONFIG = {
-  maxResponseLength: 500,       // Maximum characters in response
-  maxSentences: 5,              // Maximum sentences in response
-  maxContextItems: 3,           // Maximum RAG context items
-  maxInsights: 2,               // Maximum insights to include
-  truncateEllipsis: "...",      // Truncation indicator
+  maxResponseLength: 300, // Maximum characters in response (reduced)
+  maxSentences: 3, // Maximum sentences in response (reduced)
+  maxContextItems: 2, // Maximum RAG context items
+  maxInsights: 2, // Maximum insights to include
 };
 
 /**
@@ -103,46 +102,33 @@ const prepareContext = async (userId, query) => {
  */
 const buildSystemPrompt = (context) => {
   // Limit context data to reduce token usage
-  const limitedInsights = context.recentInsights.slice(0, RESPONSE_CONFIG.maxInsights);
-  const limitedRagContext = context.ragContext.slice(0, RESPONSE_CONFIG.maxContextItems);
+  const limitedInsights = context.recentInsights.slice(
+    0,
+    RESPONSE_CONFIG.maxInsights,
+  );
+  const limitedRagContext = context.ragContext.slice(
+    0,
+    RESPONSE_CONFIG.maxContextItems,
+  );
 
-  let prompt = `You are Aura, an AI fitness assistant from ActiveAura. You provide personalized, data-driven fitness advice with an encouraging and supportive personality.
+  let prompt = `You are Aura, a friendly AI fitness assistant.
 
-RESPONSE FORMAT RULES:
-1. Keep responses CONCISE - maximum 3-4 sentences
-2. Be direct and actionable
-3. Use bullet points for multiple tips
-4. No lengthy introductions or conclusions
+STRICT RESPONSE RULES:
+- Reply in EXACTLY 2-3 short sentences
+- Maximum 50 words total
+- Be warm but brief
+- Give ONE specific tip if relevant
+- Use the user's data when available
 
-IMPORTANT RULES:
-1. Base ALL recommendations ONLY on the user's actual data provided below
-2. NEVER hallucinate or invent statistics
-3. Be specific with numbers from their data
-4. If insufficient data, say "I need more data to provide a recommendation"
-5. Use encouraging, supportive, and motivational tone
-6. Give actionable, specific advice
-7. Always cite the data you're using
-8. Be friendly and helpful, celebrating user achievements
+USER PROFILE: ${context.userProfile?.fullName || "User"}, Weight: ${context.userProfile?.currentWeight || "N/A"}kg, Goal: ${context.userProfile?.goalWeight || "N/A"}kg
 
-USER DATA:
-${JSON.stringify(context.userProfile, null, 2)}
+TODAY: ${context.todayMetrics ? `${context.todayMetrics.totalCalories} calories consumed` : "No meals logged yet"}
 
-ACTIVE GOAL:
-${context.activeGoal ? JSON.stringify(context.activeGoal, null, 2) : "No active goal set"}
+THIS WEEK: ${context.weekActivities?.count || 0} workouts, ${context.weekActivities?.totalCaloriesBurned || 0} calories burned
 
-TODAY'S METRICS:
-${context.todayMetrics ? JSON.stringify(context.todayMetrics, null, 2) : "No data logged today"}
+GOAL: ${context.activeGoal ? `${context.activeGoal.type} - ${context.activeGoal.progressPercentage}% complete` : "No active goal"}
 
-WEEK SUMMARY:
-${JSON.stringify(context.weekActivities, null, 2)}
-
-INSIGHTS TO CONSIDER:
-${limitedInsights.map((i) => `- ${i.title}: ${i.recommendation}`).join("\n")}
-
-RELEVANT CONTEXT:
-${limitedRagContext.join("\n")}
-
-Now, respond to the user's query based ONLY on this data. Keep your response concise and actionable.`;
+Respond briefly and helpfully.`;
 
   return prompt;
 };
@@ -171,26 +157,38 @@ const truncateResponse = (response) => {
 
   let truncated = response.trim();
 
-  // Limit by character count
+  // Remove any markdown formatting that makes it look messy
+  truncated = truncated
+    .replace(/\*\*/g, "") // Remove bold **
+    .replace(/\*/g, "") // Remove italics *
+    .replace(/#{1,6}\s/g, "") // Remove headers #
+    .replace(/```[\s\S]*?```/g, "") // Remove code blocks
+    .replace(/`/g, "") // Remove inline code
+    .replace(/\n{2,}/g, " ") // Replace multiple newlines with space
+    .replace(/\n/g, " ") // Replace single newlines with space
+    .trim();
+
+  // Limit by sentence count FIRST (more important)
+  const sentences = truncated.match(/[^.!?]+[.!?]+/g) || [truncated];
+  if (sentences.length > RESPONSE_CONFIG.maxSentences) {
+    truncated = sentences
+      .slice(0, RESPONSE_CONFIG.maxSentences)
+      .join(" ")
+      .trim();
+  }
+
+  // Then limit by character count
   if (truncated.length > RESPONSE_CONFIG.maxResponseLength) {
     truncated = truncated.substring(0, RESPONSE_CONFIG.maxResponseLength);
-    // Try to end at a sentence boundary
+    // End at last complete sentence
     const lastSentenceEnd = Math.max(
       truncated.lastIndexOf("."),
       truncated.lastIndexOf("!"),
-      truncated.lastIndexOf("?")
+      truncated.lastIndexOf("?"),
     );
-    if (lastSentenceEnd > RESPONSE_CONFIG.maxResponseLength * 0.5) {
+    if (lastSentenceEnd > truncated.length * 0.4) {
       truncated = truncated.substring(0, lastSentenceEnd + 1);
-    } else {
-      truncated += RESPONSE_CONFIG.truncateEllipsis;
     }
-  }
-
-  // Limit by sentence count
-  const sentences = truncated.match(/[^.!?]+[.!?]+/g) || [truncated];
-  if (sentences.length > RESPONSE_CONFIG.maxSentences) {
-    truncated = sentences.slice(0, RESPONSE_CONFIG.maxSentences).join(" ").trim();
   }
 
   return truncated;
@@ -202,19 +200,12 @@ const truncateResponse = (response) => {
 const formatResponse = (response) => {
   if (!response) return response;
 
-  // Clean up extra whitespace
+  // Clean up extra whitespace and normalize
   let formatted = response.replace(/\s+/g, " ").trim();
 
-  // Remove any incomplete sentences at the end
-  if (!formatted.match(/[.!?]$/)) {
-    const lastPunctuation = Math.max(
-      formatted.lastIndexOf("."),
-      formatted.lastIndexOf("!"),
-      formatted.lastIndexOf("?")
-    );
-    if (lastPunctuation > formatted.length * 0.7) {
-      formatted = formatted.substring(0, lastPunctuation + 1);
-    }
+  // Ensure it ends with proper punctuation
+  if (formatted && !formatted.match(/[.!?]$/)) {
+    formatted += ".";
   }
 
   return formatted;
@@ -240,7 +231,7 @@ const getChatbotResponse = async (userId, userQuery) => {
 
     // Get LLM response with max token limit
     const llmResponse = await callLLM(userQuery, systemPrompt, {
-      maxTokens: 200,  // Limit LLM output tokens
+      maxTokens: 200, // Limit LLM output tokens
       temperature: 0.7,
     });
 
@@ -276,15 +267,15 @@ const getChatbotResponse = async (userId, userQuery) => {
  */
 const extractRecommendation = (response) => {
   if (!response) return "";
-  
+
   // Simple extraction - find recommendation or first sentence
-  const lines = response.split("\n").filter(line => line.trim());
+  const lines = response.split("\n").filter((line) => line.trim());
   const recommendation =
-    lines.find((line) => line.toLowerCase().includes("recommend")) || 
+    lines.find((line) => line.toLowerCase().includes("recommend")) ||
     lines.find((line) => line.toLowerCase().includes("suggest")) ||
     lines.find((line) => line.toLowerCase().includes("try")) ||
     lines[0];
-  
+
   // Limit recommendation length
   const maxLength = 150;
   if (recommendation && recommendation.length > maxLength) {

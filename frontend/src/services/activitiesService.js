@@ -5,6 +5,14 @@
 
 import api from "./api";
 
+// Helper to format date in local timezone
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const activitiesService = {
   /**
    * Log activity
@@ -42,20 +50,35 @@ export const activitiesService = {
    * Get daily activities
    */
   getDailyActivities: async (date) => {
+    // Format date in local timezone to avoid UTC conversion issues
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
     const response = await api.get("/activities/daily", {
-      params: { date: date.toISOString().split("T")[0] },
+      params: { date: dateStr },
     });
-    return response.data.data;
+    // Backend returns { date, count, activities }, extract the activities array
+    return response.data.data?.activities || [];
   },
 
   /**
    * Get activity history
    */
   getHistory: async (startDate, endDate) => {
+    // Format dates in local timezone
+    const formatDate = (d) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    
     const response = await api.get("/activities/history", {
       params: {
-        startDate: startDate.toISOString().split("T")[0],
-        endDate: endDate.toISOString().split("T")[0],
+        startDate: formatDate(startDate),
+        endDate: formatDate(endDate),
       },
     });
     return response.data.data;
@@ -66,7 +89,7 @@ export const activitiesService = {
    */
   getWeeklySummary: async (weekStartDate) => {
     const response = await api.get("/activities/weekly", {
-      params: { date: weekStartDate.toISOString().split("T")[0] },
+      params: { date: formatLocalDate(weekStartDate) },
     });
     return response.data.data;
   },

@@ -11,6 +11,7 @@ const activitiesRoutes = require("../modules/activities/activitiesRoutes");
 const goalsRoutes = require("../modules/goals/goalsRoutes");
 const insightsRoutes = require("../modules/insights/insightsRoutes");
 const chatbotRoutes = require("../modules/chatbot/chatbotRoutes");
+const voiceRoutes = require("../modules/voice/voiceRoutes");
 const {
   getRedisDataForUser,
   getRedisStats,
@@ -50,6 +51,7 @@ router.use("/activities", activitiesRoutes);
 router.use("/goals", goalsRoutes);
 router.use("/insights", insightsRoutes);
 router.use("/chatbot", chatbotRoutes);
+router.use("/voice", voiceRoutes);
 
 // 404 handler
 router.use((req, res) => {

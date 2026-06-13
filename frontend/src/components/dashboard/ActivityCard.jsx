@@ -9,19 +9,25 @@ import { formatDuration, formatCalories } from "../../utils/formatters";
 import { formatDate } from "../../utils/formatters";
 
 export const ActivityCard = ({ activities = [] }) => {
-  const totalCalories = activities.reduce(
-    (sum, a) => sum + a.caloriesBurned,
+  // Ensure activities is an array
+  const activityList = Array.isArray(activities) ? activities : [];
+
+  const totalCalories = activityList.reduce(
+    (sum, a) => sum + (a.caloriesBurned || 0),
     0,
   );
-  const totalDuration = activities.reduce((sum, a) => sum + a.duration, 0);
+  const totalDuration = activityList.reduce(
+    (sum, a) => sum + (a.duration || 0),
+    0,
+  );
 
   return (
     <Card
       title="Recent Activities"
-      subtitle={`${activities.length} workouts`}
+      subtitle={`${activityList.length} workouts`}
       className="space-y-4"
     >
-      {activities.length === 0 ? (
+      {activityList.length === 0 ? (
         <p className="text-gray-500 text-center py-4">
           No activities logged yet
         </p>
@@ -49,7 +55,7 @@ export const ActivityCard = ({ activities = [] }) => {
           </div>
 
           <div className="space-y-2 max-h-40 overflow-y-auto">
-            {activities.map((activity, idx) => (
+            {activityList.map((activity, idx) => (
               <div
                 key={idx}
                 className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg"

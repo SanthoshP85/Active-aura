@@ -112,25 +112,46 @@ const createGoalSchema = Joi.object({
 // ============ CALORIES SCHEMAS ============
 
 const logFoodSchema = Joi.object({
-  foodName: Joi.string().max(200).required(),
+  foodName: Joi.string().max(200).required().messages({
+    "string.empty": "Food name is required",
+    "string.max": "Food name cannot exceed 200 characters",
+  }),
   mealType: Joi.string()
     .valid("breakfast", "lunch", "dinner", "snacks")
-    .required(),
-  servingSize: Joi.string().default("100g"),
-  servingQuantity: Joi.number().positive().default(1),
-  calories: Joi.number().min(0).required(),
-  protein: Joi.number().min(0),
-  carbs: Joi.number().min(0),
-  fats: Joi.number().min(0),
-  fiber: Joi.number().min(0),
-  sugar: Joi.number().min(0),
-  notes: Joi.string().max(500),
+    .required()
+    .messages({
+      "any.only": "Please select a valid meal type",
+      "any.required": "Meal type is required",
+    }),
+  servingSize: Joi.string().default("100g").optional(),
+  servingQuantity: Joi.number().positive().default(1).optional(),
+  calories: Joi.number().min(0).required().messages({
+    "number.base": "Calories must be a number",
+    "number.min": "Calories cannot be negative",
+    "any.required": "Calories is required",
+  }),
+  protein: Joi.number().min(0).optional().allow(null, "").messages({
+    "number.min": "Protein cannot be negative",
+  }),
+  carbs: Joi.number().min(0).optional().allow(null, "").messages({
+    "number.min": "Carbs cannot be negative",
+  }),
+  fats: Joi.number().min(0).optional().allow(null, "").messages({
+    "number.min": "Fats cannot be negative",
+  }),
+  fiber: Joi.number().min(0).optional().allow(null, ""),
+  sugar: Joi.number().min(0).optional().allow(null, ""),
+  notes: Joi.string().max(500).optional().allow(null, ""),
+  date: Joi.date().optional(),
 });
 
 // ============ ACTIVITIES SCHEMAS ============
 
 const logActivitySchema = Joi.object({
-  date: Joi.date().required(),
+  date: Joi.date().required().messages({
+    "date.base": "Please provide a valid date",
+    "any.required": "Activity date is required",
+  }),
   workoutType: Joi.string()
     .valid(
       "running",
@@ -145,16 +166,43 @@ const logActivitySchema = Joi.object({
       "sports",
       "other",
     )
-    .required(),
-  duration: Joi.number().min(1).max(480).required(),
-  caloriesBurned: Joi.number().min(0).required(),
+    .required()
+    .messages({
+      "any.only": "Please select a valid workout type",
+      "any.required": "Workout type is required",
+    }),
+  duration: Joi.number().min(1).max(480).required().messages({
+    "number.base": "Duration must be a number",
+    "number.min": "Duration must be at least 1 minute",
+    "number.max": "Duration cannot exceed 480 minutes (8 hours)",
+    "any.required": "Duration is required",
+  }),
+  caloriesBurned: Joi.number().min(0).required().messages({
+    "number.base": "Calories burned must be a number",
+    "number.min": "Calories burned cannot be negative",
+    "any.required": "Calories burned is required",
+  }),
   intensity: Joi.string()
     .valid("low", "moderate", "high", "very_high")
-    .default("moderate"),
-  distance: Joi.number().min(0),
-  heartRateAvg: Joi.number().min(0),
-  heartRateMax: Joi.number().min(0),
-  notes: Joi.string().max(500),
+    .default("moderate")
+    .messages({
+      "any.only": "Intensity must be low, moderate, high, or very_high",
+    }),
+  distance: Joi.number().min(0).optional().messages({
+    "number.base": "Distance must be a number",
+    "number.min": "Distance cannot be negative",
+  }),
+  heartRateAvg: Joi.number().min(0).optional().messages({
+    "number.base": "Average heart rate must be a number",
+    "number.min": "Heart rate cannot be negative",
+  }),
+  heartRateMax: Joi.number().min(0).optional().messages({
+    "number.base": "Max heart rate must be a number",
+    "number.min": "Heart rate cannot be negative",
+  }),
+  notes: Joi.string().max(500).optional().allow("", null).messages({
+    "string.max": "Notes cannot exceed 500 characters",
+  }),
 });
 
 // ============ VALIDATION FUNCTION ============
@@ -202,13 +250,16 @@ const validate = (schema) => {
       // Handle Joi validation errors
       if (error.details) {
         const errors = {};
+        const messages = [];
+
         error.details.forEach((detail) => {
           errors[detail.path.join(".")] = detail.message;
+          messages.push(detail.message);
         });
 
         return res.status(400).json({
           success: false,
-          message: "Validation failed",
+          message: messages.join(". "),
           errors,
         });
       }
@@ -216,8 +267,7 @@ const validate = (schema) => {
       // Handle external validation errors
       return res.status(400).json({
         success: false,
-        message: "Validation error",
-        error: error.message,
+        message: error.message || "Please check your input and try again.",
       });
     }
   };
