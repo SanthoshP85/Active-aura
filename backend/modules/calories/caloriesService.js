@@ -15,8 +15,8 @@ const getOrCreateDailyTracker = async (userId, dateStr) => {
   // Parse date string to avoid timezone issues
   // dateStr format: "YYYY-MM-DD" or Date object
   let startOfDay;
-  if (typeof dateStr === 'string') {
-    const [year, month, day] = dateStr.split('-').map(Number);
+  if (typeof dateStr === "string") {
+    const [year, month, day] = dateStr.split("-").map(Number);
     startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
   } else {
     startOfDay = new Date(dateStr);
@@ -45,14 +45,17 @@ const getOrCreateDailyTracker = async (userId, dateStr) => {
 const logFood = async (userId, foodData) => {
   // Parse date string to local timezone to avoid UTC conversion issues
   let dateStr;
-  if (typeof foodData.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(foodData.date)) {
+  if (
+    typeof foodData.date === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(foodData.date)
+  ) {
     dateStr = foodData.date;
   } else if (foodData.date) {
     const d = new Date(foodData.date);
-    dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   } else {
     const d = new Date();
-    dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }
 
   // Get or create daily tracker
@@ -114,8 +117,8 @@ const logFood = async (userId, foodData) => {
 const getDailyCaloriesSummary = async (userId, dateStr) => {
   // Parse date string to avoid timezone issues
   let startOfDay;
-  if (typeof dateStr === 'string') {
-    const [year, month, day] = dateStr.split('-').map(Number);
+  if (typeof dateStr === "string") {
+    const [year, month, day] = dateStr.split("-").map(Number);
     startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
   } else {
     startOfDay = new Date(dateStr);

@@ -12,8 +12,11 @@ const { storeFitnessSummary } = require("../rag/ragService");
 const logActivity = async (userId, activityData) => {
   // Parse date string to local timezone to avoid UTC conversion issues
   let activityDate;
-  if (typeof activityData.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(activityData.date)) {
-    const [year, month, day] = activityData.date.split('-').map(Number);
+  if (
+    typeof activityData.date === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(activityData.date)
+  ) {
+    const [year, month, day] = activityData.date.split("-").map(Number);
     activityDate = new Date(year, month - 1, day, 12, 0, 0, 0); // Use noon to avoid edge cases
   } else {
     activityDate = new Date(activityData.date);
@@ -66,15 +69,15 @@ const getActivitiesRange = async (userId, startDate, endDate) => {
 const getActivitiesByDate = async (userId, dateStr) => {
   // Parse date string and create UTC day boundaries
   // dateStr format: "YYYY-MM-DD"
-  const [year, month, day] = dateStr.split('-').map(Number);
-  
+  const [year, month, day] = dateStr.split("-").map(Number);
+
   // Create UTC day boundaries (00:00:00 to 23:59:59 UTC for the given date)
   const startUTC = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
   const endUTC = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
 
   console.log(`Querying activities for ${dateStr}:`, {
     startUTC: startUTC.toISOString(),
-    endUTC: endUTC.toISOString()
+    endUTC: endUTC.toISOString(),
   });
 
   const activities = await Activities.find({

@@ -145,7 +145,9 @@ export const CaloriesPage = () => {
                 <span className="text-lg">‹</span>
               </button>
               <button
-                onClick={() => document.getElementById('calorie-date-picker').showPicker()}
+                onClick={() =>
+                  document.getElementById("calorie-date-picker").showPicker()
+                }
                 className="px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors cursor-pointer text-base font-medium flex items-center gap-2"
               >
                 <Calendar size={18} className="text-gray-500" />
@@ -160,10 +162,12 @@ export const CaloriesPage = () => {
               <input
                 id="calorie-date-picker"
                 type="date"
-                value={`${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`}
-                max={`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`}
+                value={`${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`}
+                max={`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`}
                 onChange={(e) => {
-                  const [year, month, day] = e.target.value.split('-').map(Number);
+                  const [year, month, day] = e.target.value
+                    .split("-")
+                    .map(Number);
                   setSelectedDate(new Date(year, month - 1, day));
                 }}
                 className="sr-only"
@@ -176,7 +180,9 @@ export const CaloriesPage = () => {
                     setSelectedDate(newDate);
                   }
                 }}
-                disabled={selectedDate.toDateString() === new Date().toDateString()}
+                disabled={
+                  selectedDate.toDateString() === new Date().toDateString()
+                }
                 className={`p-2 rounded-lg transition-colors ${
                   selectedDate.toDateString() === new Date().toDateString()
                     ? "text-gray-300 cursor-not-allowed"

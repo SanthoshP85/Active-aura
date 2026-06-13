@@ -11,7 +11,13 @@ import { Modal } from "../components/common/Modal";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { useData } from "../hooks/useData";
 import { ACTIVITY_TYPES, INTENSITY_LEVELS } from "../utils/constants";
-import { Plus, AlertCircle, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import {
+  Plus,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+} from "lucide-react";
 
 export const ActivitiesPage = () => {
   const { activities, logActivity, fetchDailyActivities } = useData();
@@ -150,7 +156,9 @@ export const ActivitiesPage = () => {
                 <ChevronLeft size={20} />
               </button>
               <button
-                onClick={() => document.getElementById('activity-date-picker').showPicker()}
+                onClick={() =>
+                  document.getElementById("activity-date-picker").showPicker()
+                }
                 className="px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors cursor-pointer text-base font-medium flex items-center gap-2 min-w-[180px] justify-center"
               >
                 <Calendar size={18} className="text-gray-500" />
@@ -165,10 +173,12 @@ export const ActivitiesPage = () => {
               <input
                 id="activity-date-picker"
                 type="date"
-                value={`${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`}
-                max={`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`}
+                value={`${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`}
+                max={`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`}
                 onChange={(e) => {
-                  const [year, month, day] = e.target.value.split('-').map(Number);
+                  const [year, month, day] = e.target.value
+                    .split("-")
+                    .map(Number);
                   setSelectedDate(new Date(year, month - 1, day));
                 }}
                 className="sr-only"

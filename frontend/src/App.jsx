@@ -39,10 +39,10 @@ function App() {
 
   // Check session on app load only once
   useEffect(() => {
-    if (!sessionChecked && token) {
+    if (!sessionChecked) {
       checkSession();
     }
-  }, [token, sessionChecked, checkSession]);
+  }, [sessionChecked, checkSession]);
 
   return (
     <Router>

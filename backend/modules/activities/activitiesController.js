@@ -61,7 +61,7 @@ const getRange = async (req, res, next) => {
 const getByDate = async (req, res, next) => {
   try {
     // Pass date string directly to avoid timezone issues
-    const dateStr = req.query.date || new Date().toISOString().split('T')[0];
+    const dateStr = req.query.date || new Date().toISOString().split("T")[0];
     const activities = await getActivitiesByDate(req.userId, dateStr);
 
     return successResponse(res, 200, "Activities fetched", {
